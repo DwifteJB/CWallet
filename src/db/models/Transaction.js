@@ -7,9 +7,9 @@ const sequelize = require('../database');
 class Transaction extends Model {};
 
 Transaction.init({
-    index: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0
+    message: {
+        type: DataTypes.TEXT,
+        defaultValue: ' '
     },
     timestamp: {
         type: DataTypes.INTEGER,
