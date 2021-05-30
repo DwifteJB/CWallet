@@ -1,0 +1,32 @@
+{
+  "dependencies": {
+    "blessed": "^0.1.81",
+    "blessed-contrib": "^4.8.21",
+    "crypto-js": "^4.0.0",
+    "prompts": "^2.4.1"
+  },
+  "name": "ccoin",
+  "description": "CUM COIN TO THE MOON!",
+  "version": "1.0.0",
+  "main": "index.js",
+  "devDependencies": {},
+  "scripts": {
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DwifteJB/CCoin.git"
+  },
+  "keywords": [
+    "coin",
+    "crypto",
+    "currency",
+    "cryptocurrency"
+  ],
+  "author": "DwifteJB/Thunder7",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DwifteJB/CCoin/issues"
+  },
+  "homepage": "https://github.com/DwifteJB/CCoin#readme"
+}
