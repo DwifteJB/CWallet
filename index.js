@@ -2,14 +2,12 @@
 - CUM COIN JS
 - Created By DwifteJB and Thunder7
 */
-const SHA256 = require("crypto-js/sha256");
-
 const fs = require("fs");
 const api = require("./src/modules/api.js");
 const prompts = require('prompts');
 const crypto = require("crypto");
 const accounts = require("./src/db/models/Account.js")
-const Transaction = require("./src/db/models/Transaction")
+const Transaction = require("./src/db/models/Transactions")
 const CC = new api.Blockchain()
 const debug = new api.debug();
 // FUNCTIONS
@@ -36,18 +34,8 @@ function login() {
         if (account.password !== info.password) {
             return console.log(`Failed to login to ${info.username}.`)
         }
-        debug.accountWindow(info,account)
-        //console.log(api.getWalletBalance(info.username))
+        debug.accountWindow(info,account.dataValues)
     })();
 }
-CC.addNewBlock(
-    new api.BlockCrypto({
-      message: "Poggers3",
-      sender: "1ef7defff7c23dde94fa3d17eff6b00132329788ebbb845fab32860d0e7cffac",
-      recipient: "89a09ff4366e90824da2fa50f228a227842de33538c2130a412e42536ac416df",
-      quantity: 202
-    })
-);
-(async () => {
-    //console.log(await Transaction.findAll())
-})();
+login();
+// api.SendCoin(CC, "86c60c58f0ee287101fe05be2a97fc06f0207173c298af7385f6fe6ae2a9487f", "1ef7defff7c23dde94fa3d17eff6b00132329788ebbb845fab32860d0e7cffac", "For CashApp Help", 1)

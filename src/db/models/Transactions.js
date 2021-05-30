@@ -4,9 +4,9 @@ const {
 } = require('sequelize');
 const sequelize = require('../database');
 
-class Transaction extends Model {};
+class Transactions extends Model {};
 
-Transaction.init({
+Transactions.init({
     message: {
         type: DataTypes.TEXT,
         defaultValue: ' '
@@ -35,4 +35,4 @@ Transaction.init({
     sequelize
 });
 
-module.exports = Transaction;
+module.exports = Transactions;

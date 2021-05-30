@@ -2,28 +2,44 @@
 - CumCoin API
 - Developed by DwifteJB and Thunder7
 */
-const SHA256 = require("crypto-js/sha256");
+const SHA256 = require("crypto-js/sha256")
 const fs = require("fs");
 const crypto = require('crypto');
 const blessed = require("blessed");
 const accounts = require("../db/models/Account.js")
-const Transaction = require("../db/models/Account.js")
+const Transaction = require("../db/models/Transactions.js")
 const contrib = require('blessed-contrib');
 (async () => {
-    function getWalletBalance(username) {
-        return new Promise((resolve, reject) => {
-            //const accounts = JSON.parse(fs.readFileSync("./src/data/wallets.json"));
-            // const transactions = JSON.parse(fs.readFileSync("./src/data/transactions.json"));
-            // Get account info
-            // for (index in accounts) {
-            //     if (accounts[index][username]) {
-            //         for (transaction in transactions) {
-            //             console.log(transactions[transaction])
-            //             return resolve()
-            //         }
-            //     }
-            // }
-            reject(false);
+    function SendCoin(blockchain, sender, recipient, message, quantity) {
+        return new Promise(async (resolve) => {
+            await blockchain.addNewBlock(
+                new this.BlockCrypto({
+                    message: message,
+                    sender: sender,
+                    recipient: recipient,
+                    quantity: quantity
+                })
+            )
+            console.log(`---[ TRANSFER ]---------------------------------------------------------------- \nSender: ${sender}\nRecipient: ${recipient}\nQuantity: ${quantity}\nMessage: ${message}\n-------------------------------------------------------------------------------`);
+            resolve(true);
+        })
+    }
+    function findAllTransactions() {
+        return new Promise(async (resolve) => {
+            return resolve(JSON.parse(JSON.stringify(await Transaction.findAll())));
+        });
+    }
+    function getWalletBalance(wallet) {
+        return new Promise(async (resolve) => {
+            let wallet_balance = 0;
+            const transactions = await findAllTransactions();
+            for (index in transactions) {
+                if (transactions[index].recipient == wallet) {
+                    wallet_balance += transactions[index].quantity;
+                }
+            }
+ 
+            resolve(wallet_balance);
         })
     }
 
@@ -74,18 +90,18 @@ const contrib = require('blessed-contrib');
         });
     }
     class debug {
-        accountWindow(info, account) {
+        async accountWindow(info, account) {
             var screen = blessed.screen({
                 smartCSR: true
             });
-
+            const wallet_amount = await getWalletBalance(crypto.createHash("sha256").update(account.publickey).digest("hex"))
             screen.title = 'CCoin Account';
             screen.key(['escape', 'q', 'C-c'], function (ch, key) {
                 return process.exit(0);
             });
             const box = blessed.box({
                 label: 'Your Account',
-                content: `Username: ${info.username}\nWallet: ${SHA256(account.private_key)}\nAmount: eta`,
+                content: `Username: ${info.username}\nWallet: ${crypto.createHash("sha256").update(account.publickey).digest("hex")}\nAmount: ${wallet_amount}`,
                 top: 'center',
                 left: 'center',
                 width: '75%',
@@ -141,14 +157,14 @@ const contrib = require('blessed-contrib');
             return this.block1chain[this.block1chain.length - 1];
         }
         addNewBlock(newBlock) {
-            newBlock.nextHash = this.obtainLatestBlock().hash;
-            newBlock.hash = newBlock.computeHash();
-            this.block1chain.push(newBlock);
-            console.log(newBlock)
-            Transaction.create({message: newBlock.info.message, timestamp: newBlock.timestamp, sender: newBlock.info.sender, recipient: newBlock.info.recipient, quantity: newBlock.info.quantity, hash: newBlock.hash})
-
+            return new Promise((resolve) => {
+                    newBlock.nextHash = this.obtainLatestBlock().hash;
+                    newBlock.hash = newBlock.computeHash();
+                    this.block1chain.push(newBlock);
+                    Transaction.create({message: newBlock.info.message, timestamp: newBlock.timestamp, sender: newBlock.info.sender, recipient: newBlock.info.recipient, quantity: newBlock.info.quantity, hash: newBlock.hash})
+                    resolve(true);
+            })
         }
-
         checkChainValidity() {
             for (let i = 1; i < this.block1chain.length; i++) {
                 const currentBlock = this.block1chain[i];
@@ -169,6 +185,8 @@ const contrib = require('blessed-contrib');
         Blockchain,
         getWallet,
         debug,
-        getWalletBalance
+        getWalletBalance,
+        findAllTransactions,
+        SendCoin
     }
 })();
