@@ -3,7 +3,9 @@
     "blessed": "^0.1.81",
     "blessed-contrib": "^4.8.21",
     "crypto-js": "^4.0.0",
-    "prompts": "^2.4.1"
+    "prompts": "^2.4.1",
+    "sequelize": "^6.6.2",
+    "sqlite3": "^5.0.2"
   },
   "name": "ccoin",
   "description": "CUM COIN TO THE MOON!",
