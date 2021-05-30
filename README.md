@@ -1,0 +1,2 @@
+# CCoin
+CUM COIN TO THE MOON!
