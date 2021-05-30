@@ -65,11 +65,17 @@ const contrib = require('blessed-contrib');
                     type: 'spki',
                     format: 'pem'
                 },
+                // GENERATE WITH PASSWORD
+                // privateKeyEncoding: {
+                //     type: 'pkcs8',
+                //     format: 'pem',
+                //     cipher: 'aes-256-cbc',
+                //     passphrase: password
+                // }
+                // GENERATE WITHOUT PASSWORD
                 privateKeyEncoding: {
                     type: 'pkcs8',
-                    format: 'pem',
-                    cipher: 'aes-256-cbc',
-                    passphrase: password
+                    format: 'pem'
                 }
             }, async (err, publicKey, privateKey) => {
                 const key = {
