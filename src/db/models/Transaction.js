@@ -15,19 +15,17 @@ Transaction.init({
         type: DataTypes.INTEGER,
         allowNull: false
     },
-    info: {
-        sender: {
-            type: DataTypes.STRING,
-            allowNull: false
-        },
-        recipient: {
-            type: DataTypes.STRING,
-            allowNull: false
-        },
-        quantity: {
-            type: DataTypes.INTEGER,
-            allowNull: false
-        }
+    sender: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    recipient: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    quantity: {
+        type: DataTypes.INTEGER,
+        allowNull: false
     },
     hash: {
         type: DataTypes.STRING,

@@ -7,12 +7,13 @@ const fs = require("fs");
 const crypto = require('crypto');
 const blessed = require("blessed");
 const accounts = require("../db/models/Account.js")
+const Transaction = require("../db/models/Account.js")
 const contrib = require('blessed-contrib');
 (async () => {
     function getWalletBalance(username) {
         return new Promise((resolve, reject) => {
             //const accounts = JSON.parse(fs.readFileSync("./src/data/wallets.json"));
-            const transactions = JSON.parse(fs.readFileSync("./src/data/transactions.json"));
+            // const transactions = JSON.parse(fs.readFileSync("./src/data/transactions.json"));
             // Get account info
             // for (index in accounts) {
             //     if (accounts[index][username]) {
@@ -111,9 +112,8 @@ const contrib = require('blessed-contrib');
 
             return `${pad(d.getFullYear(),4)}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
         }
-        constructor(index, info, nextHash = " ") {
-            this.index = index;
-            this.current_time = this.getTimestamp();
+        constructor(info, nextHash = " ") {
+            this.timestamp = new Date();
             this.info = info;
             this.nextHash = nextHash;
             this.hash = this.computeHash();
@@ -121,9 +121,8 @@ const contrib = require('blessed-contrib');
 
         computeHash() {
             return SHA256(
-                this.index +
                 this.nextHash +
-                this.current_time +
+                this.timestamp +
                 JSON.stringify(this.info)
             ).toString();
         }
@@ -145,7 +144,8 @@ const contrib = require('blessed-contrib');
             newBlock.nextHash = this.obtainLatestBlock().hash;
             newBlock.hash = newBlock.computeHash();
             this.block1chain.push(newBlock);
-            fs.writeFileSync("./src/data/transactions.json", JSON.stringify(this.block1chain, null, 4));
+            console.log(newBlock)
+            Transaction.create({message: newBlock.info.message, timestamp: newBlock.timestamp, sender: newBlock.info.sender, recipient: newBlock.info.recipient, quantity: newBlock.info.quantity, hash: newBlock.hash})
 
         }
 
