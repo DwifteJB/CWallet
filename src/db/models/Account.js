@@ -9,7 +9,8 @@ class Account extends Model {};
 Account.init({
     username: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: false,
+        unique: true
     },
     publickey: {
         type: DataTypes.STRING,
