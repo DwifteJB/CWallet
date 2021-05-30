@@ -26,3 +26,5 @@ Account.init({
 }, {
     sequelize
 });
+
+module.exports = Account;
