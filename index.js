@@ -8,6 +8,7 @@ const fs = require("fs");
 const api = require("./src/modules/api.js");
 const prompts = require('prompts');
 const crypto = require("crypto");
+const accounts = require("./src/db/models/Account.js")
 const CC = new api.Blockchain()
 const debug = new api.debug();
 // FUNCTIONS
@@ -15,13 +16,7 @@ function register() {
     (async () => {
         console.log("Register")
         const info = await prompts([{type: 'text',name: 'username',message: 'Enter your Username'},{type: 'text',name: 'password',message: 'Enter your password'}])
-        const wallets = JSON.parse(fs.readFileSync("./src/data/wallets.json"))
-        for(index in wallets) {
-            if (wallets[index][info.username]) {
-                console.log("User " + info.username + " already exists.")
-                return;
-            }
-        }
+        if (await api.getWallet(info.username) === null) { return console.log(`Account ${info.username} already exists.`)}
         console.log("Generating wallet...")
         const wallet = await api.generateWallet(info.password,info.username);
         console.log("Wallet created!");  

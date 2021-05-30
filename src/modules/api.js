@@ -6,37 +6,38 @@ const SHA256 = require("crypto-js/sha256");
 const fs = require("fs");
 const crypto = require('crypto');
 const blessed = require("blessed");
+const accounts = require("../db/models/Account.js")
 const contrib = require('blessed-contrib');
 (async () => {
     function getWalletBalance(username) {
         return new Promise((resolve,reject) => {
-            const accounts = JSON.parse(fs.readFileSync("./src/data/wallets.json"));
+            //const accounts = JSON.parse(fs.readFileSync("./src/data/wallets.json"));
             const transactions = JSON.parse(fs.readFileSync("./src/data/transactions.json"));
             // Get account info
-            for (index in accounts) {
-                if (accounts[index][username]) {
-                    for (transaction in transactions) {
-                        console.log(transactions[transaction])
-                        return resolve()
-                    }
-                }
-            }
+            // for (index in accounts) {
+            //     if (accounts[index][username]) {
+            //         for (transaction in transactions) {
+            //             console.log(transactions[transaction])
+            //             return resolve()
+            //         }
+            //     }
+            // }
             reject(false);
         })
     }
     function getWallet(username) {
-        return new Promise((resolve,reject) => {
-            const accounts = JSON.parse(fs.readFileSync("./src/data/wallets.json"));
-            for(index in accounts) {
-                if (accounts[index][username]) {
-                    return resolve(accounts[index][username]);
-                }
+        return new Promise(async (resolve,reject) => {
+            try {
+                const account = await accounts.findOne({where:{username: username}});
+            if (account === null) {
+                return reject(false);
             }
-            return resolve(false);
+            resolve(account)
+            } catch (err){console.log(err)}
         })
     }
     function generateWallet(password, username) {
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
             const { generateKeyPair } = require('crypto');
             generateKeyPair('rsa', {
             modulusLength: 4096,
@@ -50,7 +51,7 @@ const contrib = require('blessed-contrib');
                 cipher: 'aes-256-cbc',
                 passphrase: password
             }
-            }, (err, publicKey, privateKey) => {
+            }, async (err, publicKey, privateKey) => {
                 const key = {
                     [username]: {
                         "privatekey": privateKey,
@@ -58,10 +59,7 @@ const contrib = require('blessed-contrib');
                         "password": password
                     }
                 }
-                const wallets = JSON.parse(fs.readFileSync("./src/data/wallets.json"))
-                wallets.push(key);
-                // add key to wallets.json
-                fs.writeFileSync("./src/data/wallets.json", JSON.stringify(wallets,null,4))
+                await accounts.create({username: username, publickey: publicKey, privatekey: privateKey, password:password})
                 resolve(key);
             });
         });
