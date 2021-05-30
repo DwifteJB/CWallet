@@ -44,8 +44,7 @@ CC.addNewBlock(
     new api.BlockCrypto({
       message: "Poggers3",
       sender: "1ef7defff7c23dde94fa3d17eff6b00132329788ebbb845fab32860d0e7cffac",
-      recipient: "8
-      9a09ff4366e90824da2fa50f228a227842de33538c2130a412e42536ac416df",
+      recipient: "89a09ff4366e90824da2fa50f228a227842de33538c2130a412e42536ac416df",
       quantity: 202
     })
 );
