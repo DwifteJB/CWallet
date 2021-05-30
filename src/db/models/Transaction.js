@@ -9,7 +9,7 @@ class Transaction extends Model {};
 Transaction.init({
     index: {
         type: DataTypes.INTEGER,
-        allowNull: false
+        defaultValue: 0
     },
     timestamp: {
         type: DataTypes.INTEGER,
