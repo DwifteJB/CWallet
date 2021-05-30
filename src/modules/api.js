@@ -8,7 +8,23 @@ const crypto = require('crypto');
 const blessed = require("blessed");
 const contrib = require('blessed-contrib');
 (async () => {
-    function getWallet(password,username) {
+    function getWalletBalance(username) {
+        return new Promise((resolve,reject) => {
+            const accounts = JSON.parse(fs.readFileSync("./src/data/wallets.json"));
+            const transactions = JSON.parse(fs.readFileSync("./src/data/transactions.json"));
+            // Get account info
+            for (index in accounts) {
+                if (accounts[index][username]) {
+                    for (transaction in transactions) {
+                        console.log(transactions[transaction])
+                        return resolve()
+                    }
+                }
+            }
+            reject(false);
+        })
+    }
+    function getWallet(username) {
         return new Promise((resolve,reject) => {
             const accounts = JSON.parse(fs.readFileSync("./src/data/wallets.json"));
             for(index in accounts) {
@@ -141,5 +157,5 @@ const contrib = require('blessed-contrib');
         }
     }
 
-    module.exports = {generateWallet, BlockCrypto, Blockchain, getWallet, debug}
+    module.exports = {generateWallet, BlockCrypto, Blockchain, getWallet, debug, getWalletBalance}
 })();

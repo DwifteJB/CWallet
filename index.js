@@ -31,27 +31,17 @@ function login() {
     (async () => {
         console.log("Login")
         const info = await prompts([{type: 'text',name: 'username',message: 'Enter your Username'},{type: 'text',name: 'password',message: 'Enter your password'}])
-        const account = await api.getWallet(info.password,info.username);
+        const account = await api.getWallet(info.username);
         if (account == false) {
             return console.log("Account " + info.username + " not found.")
         }
-        debug.accountWindow(info,account)
+        if (account.password !== info.password) {
+            return console.log(`Failed to login to ${info.username}.`)
+        }
+        //debug.accountWindow(info,account)
+        console.log(api.getWalletBalance(info.username))
     })();
 }
-// const wallet =  api.generateWallet(150);
-// CC.addNewBlock(
-//     new api.BlockCrypto(1, "06/04/2021", {
-//       sender: "Robbie Morgan",
-//       recipient: "Thundercock",
-//       quantity: 20
-//     })
-// );
-
-
-// console.log(wallet);
-// console.log(JSON.stringify(CC, null, 4));
-
-
 // CC.addNewBlock(
 //     new api.BlockCrypto(1, {
 //       sender: "1ef7defff7c23dde94fa3d17eff6b00132329788ebbb845fab32860d0e7cffac",
