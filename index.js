@@ -15,20 +15,43 @@ const debug = new api.debug();
 function register() {
     (async () => {
         console.log("Register")
-        const info = await prompts([{type: 'text',name: 'username',message: 'Enter your Username'},{type: 'text',name: 'password',message: 'Enter your password'}])
-        if (await api.getWallet(info.username) === null) { return console.log(`Account ${info.username} already exists.`)}
+        const info = await prompts([{
+            type: 'text',
+            name: 'username',
+            message: 'Enter your Username'
+        }, {
+            type: 'text',
+            name: 'password',
+            message: 'Enter your password'
+        }])
+        try {
+            await api.getWallet(info.username);
+        } catch (error) {
+            return console.log(`Account ${info.username} does not exist.`)
+        }
         console.log("Generating wallet...")
-        const wallet = await api.generateWallet(info.password,info.username);
-        console.log("Wallet created!");  
+        const wallet = await api.generateWallet(info.password, info.username);
+        console.log("Wallet created!");
     })();
 }
+
 function login() {
     (async () => {
         console.log("Login")
-        const info = await prompts([{type: 'text',name: 'username',message: 'Enter your Username'},{type: 'text',name: 'password',message: 'Enter your password'}])
-        const account = await api.getWallet(info.username);
-        if (account == false) {
-            return console.log("Account " + info.username + " not found.")
+        const info = await prompts([{
+            type: 'text',
+            name: 'username',
+            message: 'Enter your Username'
+        }, {
+            type: 'text',
+            name: 'password',
+            message: 'Enter your password'
+        }])
+        let account;
+        try {
+            account = await api.getWallet(info.username);
+        } catch (err) {
+            return console.log('That account does not exist.');
         }
         if (account.password !== info.password) {
             return console.log(`Failed to login to ${info.username}.`)
