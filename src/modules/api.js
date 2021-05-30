@@ -28,7 +28,7 @@ const contrib = require('blessed-contrib');
 
     function getWallet(username) {
 
-        return new Promise(async (resolve,reject) => {
+        return new Promise(async (resolve) => {
             const account = await accounts.findOne({where:{username: username}});
             if (account === null) {
                 return resolve(false);

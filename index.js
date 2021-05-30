@@ -16,10 +16,11 @@ function register() {
     (async () => {
         console.log("Register")
         const info = await prompts([{type: 'text',name: 'username',message: 'Enter your Username'},{type: 'text',name: 'password',message: 'Enter your password'}]);
-        if (await api.getWallet(info.username) == false) { return console.log(`Account ${info.username} already exists.`)}
+        if (await api.getWallet(info.username) !== false) { return console.log(`Account ${info.username} already exists.`)}
         console.log("Generating wallet...")
         const wallet = await api.generateWallet(info.password, info.username);
         console.log("Wallet created!");
+        login();
     })();
 }
 
@@ -45,4 +46,4 @@ function login() {
 //       quantity: 20
 //     })
 // );
-login();
+register();
