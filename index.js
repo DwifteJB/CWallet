@@ -18,10 +18,11 @@ function register() {
         const info = await prompts([{type: 'text',name: 'username',message: 'Enter your Username'},{type: 'text',name: 'password',message: 'Enter your password'}]);
         if (await api.getWallet(info.username) == false) { return console.log(`Account ${info.username} already exists.`)}
         console.log("Generating wallet...")
-        const wallet = await api.generateWallet(info.password,info.username);
-        console.log("Wallet created!");  
+        const wallet = await api.generateWallet(info.password, info.username);
+        console.log("Wallet created!");
     })();
 }
+
 function login() {
     (async () => {
         console.log("Login")
