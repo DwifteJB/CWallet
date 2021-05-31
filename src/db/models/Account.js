@@ -23,6 +23,14 @@ Account.init({
     password: {
         type: DataTypes.STRING,
         allowNull: false
+    },
+    email: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    cookie: {
+        type: DataTypes.STRING,
+        allowNull: true
     }
 }, {
     sequelize

@@ -1,0 +1,97 @@
+html,
+body {
+  height: 100%;
+}
+
+body {
+  display: flex;
+  align-items: center;
+  padding-top: 40px;
+  padding-bottom: 40px;
+}
+
+.form-signin {
+  width: 100%;
+  max-width: 330px;
+  padding: 15px;
+  margin: auto;
+  text-align:center;
+}
+
+
+.form-signin .form-floating:focus-within {
+  z-index: 2;
+}
+
+.form-signin input[type="email"] {
+  margin-bottom: -1px;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.form-signin input[type="password"] {
+  margin-bottom: 10px;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+.form-control::placeholder {
+  color:#6c757d;
+  opacity: 1;
+}
+.form-control {
+  color: #495057;
+}
+
+.signin-outline,
+.border,
+.container {
+    width:30%;
+}
+/* 
+    Using ccoin-web.css fonts
+    User-Select: none; makes it feel like an image, i cba to do an image
+    */
+.ccoin {
+    font-family: 'Ubuntu Condensed', sans-serif;
+    user-select: none;
+    font-size: 30px;
+}
+.login {
+  background-color: rgb(51, 101, 192);
+  font-family: 'Ubuntu', sans-serif;
+  font-size: 15px;
+}
+.other-button {
+  font-family: 'Ubuntu', sans-serif;
+  font-size: 15px;
+}
+.alert {
+  width: 100%;
+  color:white;
+  font-size:17px;
+  font-family: 'Source Sans Pro', sans-serif;
+}
+.alert-danger {
+  background-color: rgba(241, 45, 10, 0.527);
+}
+.alert-success {
+  background-color: rgba(26, 226, 19, 0.527);
+}
+.alert-info {
+  background-color: rgba(245, 242, 63, 0.527)
+}
+
+/* emulate paypal seperator cuz its cool */
+.seperator {
+  border-top: 1px solid #d8e2e7;
+  position: relative;
+  margin: 25px 0 10px;
+  text-align: center;
+}
+.textSeperator {
+  background-color: #fff;
+  padding: 0 .5em;
+  position: relative;
+  color: #6c7378;
+  top: -.7em;
+}

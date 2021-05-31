@@ -1,0 +1,33 @@
+<link href="./src/css/signin-ccoin.css" rel="stylesheet">
+<div class="container border outline-signin">
+    <div class="form-signin">
+        <form method="POST" action="/login">
+            <h1 class="h3 mb-3 fw-normal ccoin"><i class="bi bi-wallet2"></i> CCoin</h1>
+            {{#if message}}
+                <div class="alert {{messageClass}}" role="alert">
+                    {{message}}
+                </div>
+            {{/if}}
+
+            <div class="form-floating">
+
+
+            <input name="email" type="email" class="form-control" id="floatingInput" placeholder="Dwifte">
+            <label for="floatingInput">Email Address</label>
+            </div>
+            <div class="form-floating">
+            <input name="password" type="password" class="form-control" id="floatingPassword" placeholder="Thunder7Yoshi123">
+            <label for="floatingPassword">Password</label>
+            </div>
+            <div class="form-group">
+            
+            <button class="w-100 btn btn-lg btn-primary login" type="submit"><i class="bi bi-person-fill"></i> LOGIN</button>
+            <div class="seperator">
+                <span class="textSeperator">or</span>
+            </div>
+            <a href="/register" class="w-100 btn btn-lg btn-light other-button"><i class="bi bi-plus text-muted"></i> New Account</a></div>
+            <!-- <p class="mt-5 mb-3 text-muted">By registering you accept the <a>terms of service</a></p> -->
+        </form>
+    </div>
+
+</div>

@@ -14,10 +14,27 @@ const debug = new api.debug();
 function register() {
     (async () => {
         console.log("Register")
-        const info = await prompts([{type: 'text',name: 'username',message: 'Enter your Username'},{type: 'text',name: 'password',message: 'Enter your password'}]);
+        const info = await prompts(
+            [
+                {
+                    type: 'text',
+                    name: 'username',
+                    message: 'Enter your Username'
+                },
+                {
+                    type: 'text',
+                    name: 'password',
+                    message: 'Enter your password'
+                },
+                {
+                    type: 'text',
+                    name: 'email',
+                    message: 'Enter your email'
+                }
+            ]);
         if (await api.getWallet(info.username) !== false) { return console.log(`Account ${info.username} already exists.`)}
         console.log("Generating wallet...")
-        const wallet = await api.generateWallet(info.password, info.username);
+        const wallet = await api.generateWallet(info.password, info.username, info.email);
         console.log("Wallet created!");
         login();
     })();

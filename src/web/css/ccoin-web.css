@@ -1,0 +1,33 @@
+/*
+-  CCOIN CSS SHEET
+-  I LOVE GOOGLE FONTS!!!!!!!!!!!1
+-  MADE BY DWIFTE BECAUSE THUNDER7 DOESN'T KNOW CSS. I THINK. Just look at his site LOL
+*/
+
+/* 
+    FONTS 
+    PROVIDED BY GOOGLE + BOOTSTRAP IMAGES
+
+    font-family: 'Source Sans Pro', sans-serif;
+    font-family: 'Ubuntu', sans-serif;
+    font-family: 'Ubuntu Condensed', sans-serif;
+    font-family: 'Roboto', sans-serif;
+    https://icons.getbootstrap.com
+*/
+@import url('https://fonts.googleapis.com/css2?family=Roboto&family=Source+Sans+Pro:wght@300&family=Ubuntu&family=Ubuntu+Condensed&display=swap');
+@import url("https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css");
+body {
+    height: 100%;
+    width:100%;
+}
+.navbar-brand {
+    font-family: 'Ubuntu Condensed', sans-serif;
+    font-size: 20px;
+    user-select: none;
+}
+.navbar-nav {
+    user-select: none;
+}
+.bigtext {
+    font-family: 'Source Sans Pro', sans-serif;
+}

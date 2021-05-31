@@ -10,6 +10,22 @@ const accounts = require("../db/models/Account.js")
 const Transaction = require("../db/models/Transactions.js")
 const contrib = require('blessed-contrib');
 (async () => {
+    function addAuthToken(account,auth) {
+        return new Promise(async (resolve) => {
+            account.cookie = auth
+            await account.save();
+            return resolve(true)
+        })
+    }
+    function getAccountFromEmail(email) {
+        return new Promise(async (resolve) => {
+            const account = await accounts.findOne({where:{email: email}});
+            if (account === null) {
+                return resolve(false)
+            }
+            return resolve(account);
+        })
+    }
     function SendCoin(blockchain, sender, recipient, message, quantity) {
         return new Promise(async (resolve) => {
             await blockchain.addNewBlock(
@@ -54,7 +70,7 @@ const contrib = require('blessed-contrib');
         })
     }
 
-    function generateWallet(password, username) {
+    function generateWallet(password, username, email) {
         return new Promise(async (resolve, reject) => {
             const {
                 generateKeyPair
@@ -82,15 +98,19 @@ const contrib = require('blessed-contrib');
                     [username]: {
                         "privatekey": privateKey,
                         "publickey": publicKey,
-                        "password": password
+                        "password": password,
+                        "email": email
                     }
                 }
                 await accounts.create({
                     username: username,
                     publickey: publicKey,
                     privatekey: privateKey,
-                    password: password
+                    password: password,
+                    email: email,
+                    cookie: "N/A"
                 })
+                await accounts
                 resolve(key);
             });
         });
@@ -193,6 +213,8 @@ const contrib = require('blessed-contrib');
         debug,
         getWalletBalance,
         findAllTransactions,
-        SendCoin
+        SendCoin,
+        getAccountFromEmail,
+        addAuthToken
     }
 })();
