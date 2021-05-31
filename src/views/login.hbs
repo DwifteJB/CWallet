@@ -12,16 +12,18 @@
             <div class="form-floating">
 
 
-            <input name="email" type="email" class="form-control" id="floatingInput" placeholder="Dwifte">
+            <input id="email" name="email" type="email" class="form-control" id="floatingInput" placeholder="Dwifte">
             <label for="floatingInput">Email Address</label>
             </div>
             <div class="form-floating">
-            <input name="password" type="password" class="form-control" id="floatingPassword" placeholder="Thunder7Yoshi123">
+            <input id="password" name="password" type="password" class="form-control" id="floatingPassword" placeholder="Thunder7Yoshi123">
             <label for="floatingPassword">Password</label>
+
             </div>
+            <div id="onLoad"></div>
             <div class="form-group">
             
-            <button class="w-100 btn btn-lg btn-primary login" type="submit"><i class="bi bi-person-fill"></i> LOGIN</button>
+            <button type="submit" id="submit_post" class="w-100 btn btn-lg btn-primary login"><i class="bi bi-person-fill"></i> LOGIN</button>
             <div class="seperator">
                 <span class="textSeperator">or</span>
             </div>
@@ -31,3 +33,18 @@
     </div>
 
 </div>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    var socket = io();
+    socket.on('lolxba', (msg) => {
+        socket.emit("id", msg)
+        alert('message: ' + msg);
+    });
+    $(function() {
+        socket.on('connect', () => {
+            $("#onLoad").append(`<input value="${socket.id}" name="socketID" type=hidden />`)
+            socket.emit('id', socket.id);
+        });
+    });
+
+</script>

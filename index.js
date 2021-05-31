@@ -1,4 +1,7 @@
 const express = require('express')
+const generateAuthToken = () => {
+  return crypto.randomBytes(30).toString('hex');
+}
 const app = express()
 const fs = require("fs");
 const api = require("./src/modules/api.js");
@@ -10,9 +13,6 @@ const exphbs = require('express-handlebars');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const rateLimit = require("express-rate-limit");
-const generateAuthToken = () => {
-  return crypto.randomBytes(30).toString('hex');
-}
 // express config
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -31,17 +31,39 @@ app.use("/public/", apiLimiter);
 app.set("views", path.join(__dirname, "src/views"))
 app.set('view engine', 'hbs');
 app.use(cors());
+app.use('/socket.io', express.static('node_modules/socket.io/client-dist/'))
 app.use('/src', express.static('src/web'))
-app.post("/removeAuth", async (req,res) => {
+// start server
+const server = app.listen(8080, () => {
+  console.log(`Example app listening at http://localhost:8080`)
+})
+
+const socket = require("socket.io");
+const io = new socket.Server(server);
+app.use(function(req,res,next){
+  req.io = io;
+  next();
+})
+io.on('connection', async (socket) => {
+  socket.on('id',async (msg) => {
+    console.log('New Client connected with id: ' + msg);
+  });
+});
+app.get("/removeAuth", async (req,res) => {
   res.cookie('AuthToken', null);
   res.json({status: "Done",message:"Cleared Auth Token"})
 });
 // LOGIN / REGISTER SHIT
+app.get("/api/emit", async(req,res) => {
+  io.sockets.emit("lolxba", "Starting emit...")
+  res.end()
+})
 app.get('/login', async (req, res) => {
   if (req.cookies["AuthToken"]) {
     console.log("COOKIE FOUND: " + req.cookies["AuthToken"])
   }
   res.render("login")
+  io.sockets.emit("lolxba", "Starting emit...")
 })
 app.get('/register', async (req, res) => {
   res.render("register")
@@ -53,12 +75,22 @@ app.get("/", async (req,res) => {
   }); 
 })
 app.post("/login", async (req,res) => {
-  const { email, password } = req.body;
+  const { email, password, socketID } = req.body;
+  console.log(`---[ LOGIN ]------------------------------------------------------------------- \nEMAIL: ${email}\nPassword: ${password}\nSocket ID: ${socketID}\n-------------------------------------------------------------------------------`)
   //check if user exists + get username
+  //io.to(socketID).emit("lolxba", "Starting Login...");
+  //console.log(io.to(socketID))
   const username = await api.getAccountFromEmail(email)
   if (username == false) {
     return res.render('login', {
       message: `User doesn't exist.`,
+      messageClass: 'alert-danger'
+    }); 
+  }
+  // check if password correct
+  if (username.password !== password) {
+    return res.render('login', {
+      message: `Password Incorrect.`,
       messageClass: 'alert-danger'
     }); 
   }
@@ -69,6 +101,7 @@ app.post("/login", async (req,res) => {
 
   // Setting the auth token in cookies
   res.cookie('AuthToken', authToken);
+  //req.io.sockets.emit("lolxda", req.body);
 
   // Redirect user to the protected page
   res.redirect('/register'); //redirect to trgister cuz why not lo
@@ -142,7 +175,3 @@ app.get("/api/chunkTest", async (req,res) => {
 
 
 
-// start server
-app.listen(8080, () => {
-  console.log(`Example app listening at http://localhost:8080`)
-})
