@@ -1,2 +1,2 @@
 # CCoin
-CUM COIN TO THE MOON!
+Craft COIN TO THE MOON!
