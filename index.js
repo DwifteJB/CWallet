@@ -2,6 +2,7 @@ const express = require('express')
 const generateAuthToken = () => {
   return crypto.randomBytes(30).toString('hex');
 }
+const bcrypt = require("bcrypt")
 const app = express()
 const fs = require("fs");
 const api = require("./src/modules/api.js");
@@ -49,18 +50,23 @@ io.on('connection', async (socket) => {
     console.log('New Client connected with id: ' + msg);
   });
 });
-app.get("/removeAuth", async (req,res) => {
-  res.cookie('AuthToken', null);
-  res.json({status: "Done",message:"Cleared Auth Token"})
-});
 // LOGIN / REGISTER SHIT
 app.get("/api/emit", async(req,res) => {
   io.sockets.emit("lolxba", "Starting emit...")
   res.end()
 })
 app.get('/login', async (req, res) => {
-  if (req.cookies["AuthToken"]) {
-    console.log("COOKIE FOUND: " + req.cookies["AuthToken"])
+  if (req.cookies.AuthToken && !req.cookies.AuthToken === "no") {
+    // check if token is valid
+    const username = await api.getAccountFromAuthToken(req.cookies.AuthToken)
+    if (username === false) {
+      return res.render('login', {
+        message: `You have been logged out for inactivity.`,
+        messageClass: 'alert-danger'
+      }); 
+    } else {
+      res.redirect("/info")
+    }
   }
   res.render("login")
   io.sockets.emit("lolxba", "Starting emit...")
@@ -69,10 +75,7 @@ app.get('/register', async (req, res) => {
   res.render("register")
 })
 app.get("/", async (req,res) => {
-  res.render('login', {
-    message: `page coming soon :)`,
-    messageClass: 'alert-success'
-  }); 
+  res.redirect("/login")
 })
 app.post("/login", async (req,res) => {
   const { email, password, socketID } = req.body;
@@ -80,7 +83,7 @@ app.post("/login", async (req,res) => {
   //check if user exists + get username
   //io.to(socketID).emit("lolxba", "Starting Login...");
   //console.log(io.to(socketID))
-  const username = await api.getAccountFromEmail(email)
+  const username = await api.getAccountFromEmail(email.toLowerCase())
   if (username == false) {
     return res.render('login', {
       message: `User doesn't exist.`,
@@ -88,7 +91,8 @@ app.post("/login", async (req,res) => {
     }); 
   }
   // check if password correct
-  if (username.password !== password) {
+  const validPassword = await bcrypt.compare(password, username.password);
+  if (!validPassword) {
     return res.render('login', {
       message: `Password Incorrect.`,
       messageClass: 'alert-danger'
@@ -104,8 +108,12 @@ app.post("/login", async (req,res) => {
   //req.io.sockets.emit("lolxda", req.body);
 
   // Redirect user to the protected page
-  res.redirect('/register'); //redirect to trgister cuz why not lo
+  res.redirect('/info'); //redirect to trgister cuz why not lo
 })
+app.get("/logout", async (req,res) => {
+  res.cookie('AuthToken', "no");
+  res.redirect("/login")
+});
 app.post('/register', async (req, res) => {
   const { name,email,password } = req.body;
   // check if user exists
@@ -116,13 +124,32 @@ app.post('/register', async (req, res) => {
   });
   }
   // create user :)
-  await api.generateWallet(password, name, email);
+  const salt = await bcrypt.genSalt(10);
+  // now we set user password to hashed password
+  const hashPass = await bcrypt.hash(password, salt);
+  // use hashed password for security
+  await api.generateWallet(hashPass, name, email.toLowerCase());
   res.render('login', {
     message: 'Registration Complete. Please login to continue.',
     messageClass: 'alert-success'
   });
 });
-
+app.get("/info", async (req,res) => {
+  if (!req.cookies.AuthToken) {
+    return res.render("login", {
+      message: "You have been logged out for inactivity",
+      messageClass: "alert-danger"
+    })
+  }
+  const account = await api.getAccountFromAuthToken(req.cookies.AuthToken)
+  res.render("info", {
+    username: account.dataValues.username,
+    wallet: crypto.createHash("sha256").update(account.dataValues.publickey).digest("hex"),
+    amount: await api.getWalletBalance(crypto.createHash("sha256").update(account.dataValues.publickey).digest("hex"))
+  })
+  api.addToWallet(CC,crypto.createHash("sha256").update(account.dataValues.publickey).digest("hex"), 12)
+  console.log(req.cookies)
+})
 
 // Public API START
 app.get("/api/transactions", async (req,res) => {

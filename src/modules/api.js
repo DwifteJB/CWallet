@@ -1,6 +1,6 @@
 /*
 - CumCoin API
-- Developed by DwifteJB and Thunder7
+- Developed by DwifteJB
 */
 const SHA256 = require("crypto-js/sha256")
 const fs = require("fs");
@@ -9,7 +9,45 @@ const blessed = require("blessed");
 const accounts = require("../db/models/Account.js")
 const Transaction = require("../db/models/Transactions.js")
 const contrib = require('blessed-contrib');
+const { Webhook, MessageBuilder } = require('discord-webhook-node');
 (async () => {
+    function addToWallet(blockchain, wallet,amount) {
+        // creates a fake transaction for development
+        return new Promise(async (resolve) => {
+            await blockchain.addNewBlock(
+                new this.BlockCrypto({
+                    message: "Welcome Bonus",
+                    sender: "CCoin",
+                    recipient: wallet,
+                    quantity: amount,
+                    signature: "CCoin_Dev",
+                    verified: true
+                })
+            )
+            const embed = new MessageBuilder()
+            .setTitle('CCoin sent a transaction')
+            .addField('Recipient', wallet)
+            .addField("Amount Sent", amount)
+            .setColor('#008000')
+            .setFooter('CCoin')
+            .setTimestamp();
+            this.sendToDiscord("https://discord.com/api/webhooks/952560277247889420/HbOIntWkEHxm3GXzfx3_mHUfEViRBawu2ucUvTnqC9EzlvbK9kebXfzHB8XSs3GF_8no",embed)
+            //console.log(`---[ TRANSFER ]---------------------------------------------------------------- \nSender: ${sender}\nRecipient: ${recipient}\nQuantity: ${quantity}\nMessage: ${message}\n-------------------------------------------------------------------------------`);
+            resolve(true);
+        });
+    }
+    function sendToDiscord(webhook,embed) {
+        new Webhook(webhook).send(embed)
+    }
+    function getAccountFromAuthToken(auth) {
+        return new Promise(async (resolve) => {
+            const account = await accounts.findOne({where:{cookie: auth}});
+            if (account === null) {
+                return resolve(false);
+            }
+            return resolve(account)
+        })
+    }
     function addAuthToken(account,auth) {
         return new Promise(async (resolve) => {
             account.cookie = auth
@@ -26,14 +64,44 @@ const contrib = require('blessed-contrib');
             return resolve(account);
         })
     }
-    function SendCoin(blockchain, sender, recipient, message, quantity) {
+    function SendCoin(blockchain, sender, recipient, message, quantity, senderPrivKey, senderPubKey) {
+        const signature = new Promise((resolve) => {
+            signature = crypto.sign("sha256", Buffer.from(recipient), {
+                key: senderPrivKey,
+                padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
+            });
+            resolve(signature)
+        })
+        const verified = crypto.verify(
+            "sha256",
+            Buffer.from(recipient),
+            {
+              key: senderPubKey,
+              padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
+            },
+            signature
+        );
+        if (!verified === True) {
+            const embed = new MessageBuilder()
+            .setTitle(`${sender} failed to verify transaction`)
+            .addField('Recipient', recipient)
+            .addField("Message", message)
+            .addField("Amount", quantity)
+            .setColor('#FF0000')
+            .setFooter('CCoin')
+            .setTimestamp();
+            this.sendToDiscord("https://discord.com/api/webhooks/952547458783793162/YyqiKtZSbraxFKfi5dv44AK8jFn5OUofLquflGTX_FQVbaTLZdfI6YYmgkO_hwRqfn0y",embed)
+            return false
+        }
         return new Promise(async (resolve) => {
             await blockchain.addNewBlock(
                 new this.BlockCrypto({
                     message: message,
                     sender: sender,
                     recipient: recipient,
-                    quantity: quantity
+                    quantity: quantity,
+                    signature: signature,
+                    verified: verified
                 })
             )
             console.log(`---[ TRANSFER ]---------------------------------------------------------------- \nSender: ${sender}\nRecipient: ${recipient}\nQuantity: ${quantity}\nMessage: ${message}\n-------------------------------------------------------------------------------`);
@@ -60,7 +128,6 @@ const contrib = require('blessed-contrib');
     }
 
     function getWallet(username) {
-
         return new Promise(async (resolve) => {
             const account = await accounts.findOne({where:{username: username}});
             if (account === null) {
@@ -82,17 +149,17 @@ const contrib = require('blessed-contrib');
                     format: 'pem'
                 },
                 // GENERATE WITH PASSWORD
-                // privateKeyEncoding: {
-                //     type: 'pkcs8',
-                //     format: 'pem',
-                //     cipher: 'aes-256-cbc',
-                //     passphrase: password
-                // }
-                // GENERATE WITHOUT PASSWORD
                 privateKeyEncoding: {
                     type: 'pkcs8',
-                    format: 'pem'
+                    format: 'pem',
+                    cipher: 'aes-256-cbc',
+                    passphrase: password
                 }
+                // GENERATE WITHOUT PASSWORD
+                // privateKeyEncoding: {
+                //     type: 'pkcs8',
+                //     format: 'pem'
+                // }
             }, async (err, publicKey, privateKey) => {
                 const key = {
                     [username]: {
@@ -159,6 +226,8 @@ const contrib = require('blessed-contrib');
             this.info = info;
             this.nextHash = nextHash;
             this.hash = this.computeHash();
+            this.verified = info.verified;
+            this.signature = info.signature;
         }
 
         computeHash() {
@@ -187,7 +256,7 @@ const contrib = require('blessed-contrib');
                     newBlock.nextHash = this.obtainLatestBlock().hash;
                     newBlock.hash = newBlock.computeHash();
                     this.block1chain.push(newBlock);
-                    Transaction.create({message: newBlock.info.message, timestamp: newBlock.timestamp, sender: newBlock.info.sender, recipient: newBlock.info.recipient, quantity: newBlock.info.quantity, hash: newBlock.hash})
+                    Transaction.create({message: newBlock.info.message, timestamp: newBlock.timestamp, sender: newBlock.info.sender, recipient: newBlock.info.recipient, quantity: newBlock.info.quantity, hash: newBlock.hash, signature: newBlock.signature, verified: newBlock.verified})
                     resolve(true);
             })
         }
@@ -215,6 +284,9 @@ const contrib = require('blessed-contrib');
         findAllTransactions,
         SendCoin,
         getAccountFromEmail,
-        addAuthToken
+        addAuthToken,
+        getAccountFromAuthToken,
+        sendToDiscord,
+        addToWallet
     }
 })();

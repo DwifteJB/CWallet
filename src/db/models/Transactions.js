@@ -30,6 +30,14 @@ Transactions.init({
     hash: {
         type: DataTypes.STRING,
         allowNull: false
+    },
+    verified: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false
+    },
+    signature: {
+        type: DataTypes.STRING,
+        allowNull: false
     }
 }, {
     sequelize

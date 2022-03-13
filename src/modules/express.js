@@ -37,4 +37,4 @@ class config {
         app.use('/src', express.static(path.join(__dirname, 'src/web')))
     }
 }
-module.exports = {config};
+module.exports = {config}; // this is quite old!!!
