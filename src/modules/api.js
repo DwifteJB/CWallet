@@ -1,7 +1,9 @@
 /*
-- CumCoin API
+- CliveCoin API
 - Developed by DwifteJB
 */
+const {discordWebhook, defaultSettings} = require("../../config.json");
+const PrivateApis = require("../apiPrivateKeys.json");
 const SHA256 = require("crypto-js/sha256")
 const fs = require("fs");
 const crypto = require('crypto');
@@ -31,7 +33,7 @@ const { Webhook, MessageBuilder } = require('discord-webhook-node');
             .setColor('#008000')
             .setFooter('CCoin')
             .setTimestamp();
-            this.sendToDiscord("https://discord.com/api/webhooks/952560277247889420/HbOIntWkEHxm3GXzfx3_mHUfEViRBawu2ucUvTnqC9EzlvbK9kebXfzHB8XSs3GF_8no",embed)
+            this.sendToDiscord(discordWebhook,embed)
             //console.log(`---[ TRANSFER ]---------------------------------------------------------------- \nSender: ${sender}\nRecipient: ${recipient}\nQuantity: ${quantity}\nMessage: ${message}\n-------------------------------------------------------------------------------`);
             resolve(true);
         });
@@ -64,9 +66,9 @@ const { Webhook, MessageBuilder } = require('discord-webhook-node');
             return resolve(account);
         })
     }
-    function SendCoin(blockchain, sender, recipient, message, quantity, senderPrivKey, senderPubKey) {
-        const signature = new Promise((resolve) => {
-            signature = crypto.sign("sha256", Buffer.from(recipient), {
+    async function SendCoin(blockchain, recipient, message, quantity, senderPrivKey, senderPubKey,) {
+        const signature = await new Promise((resolve) => {
+            let signature = crypto.sign("sha256", Buffer.from(recipient), {
                 key: senderPrivKey,
                 padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
             });
@@ -81,32 +83,46 @@ const { Webhook, MessageBuilder } = require('discord-webhook-node');
             },
             signature
         );
-        if (!verified === True) {
+        if (!verified === true) {
             const embed = new MessageBuilder()
-            .setTitle(`${sender} failed to verify transaction`)
+            .setTitle(`We have failed to verify transaction`)
+            .addField('Sender', this.getWalletHash(senderPubKey))
             .addField('Recipient', recipient)
             .addField("Message", message)
             .addField("Amount", quantity)
             .setColor('#FF0000')
             .setFooter('CCoin')
             .setTimestamp();
-            this.sendToDiscord("https://discord.com/api/webhooks/952547458783793162/YyqiKtZSbraxFKfi5dv44AK8jFn5OUofLquflGTX_FQVbaTLZdfI6YYmgkO_hwRqfn0y",embed)
+            this.sendToDiscord(discordWebhook,embed)
             return false
         }
         return new Promise(async (resolve) => {
             await blockchain.addNewBlock(
                 new this.BlockCrypto({
                     message: message,
-                    sender: sender,
                     recipient: recipient,
+                    sender: this.getWalletHash(senderPubKey),
                     quantity: quantity,
                     signature: signature,
                     verified: verified
                 })
             )
-            console.log(`---[ TRANSFER ]---------------------------------------------------------------- \nSender: ${sender}\nRecipient: ${recipient}\nQuantity: ${quantity}\nMessage: ${message}\n-------------------------------------------------------------------------------`);
+            console.log(`---[ TRANSFER ]---------------------------------------------------------------- \nSender: ${this.getWalletHash(senderPubKey)}\nRecipient: ${recipient}\nQuantity: ${quantity}\nMessage: ${message}\n-------------------------------------------------------------------------------`);
+            const embed = new MessageBuilder()
+            .setTitle(`Verified transaction!`)
+            .addField('Sender', this.getWalletHash(senderPubKey))
+            .addField('Recipient', recipient)
+            .addField("Message", message)
+            .addField("Amount", quantity)
+            .setColor('#FF0000')
+            .setFooter('CCoin')
+            .setTimestamp();
+            this.sendToDiscord(discordWebhook,embed)
             resolve(true);
         })
+    }
+    function getWalletHash(publicKey) {
+        return crypto.createHash("sha256").update(publicKey).digest("hex")
     }
     function findAllTransactions() {
         return new Promise(async (resolve) => {
@@ -121,13 +137,16 @@ const { Webhook, MessageBuilder } = require('discord-webhook-node');
                 if (transactions[index].recipient == wallet) {
                     wallet_balance += transactions[index].quantity;
                 }
+                if (transactions[index].sender == wallet) {
+                    wallet_balance -= transactions[index].quantity;
+                }
             }
  
             resolve(wallet_balance);
         })
     }
 
-    function getWallet(username) {
+    function getAccountFromUsername(username) {
         return new Promise(async (resolve) => {
             const account = await accounts.findOne({where:{username: username}});
             if (account === null) {
@@ -149,17 +168,17 @@ const { Webhook, MessageBuilder } = require('discord-webhook-node');
                     format: 'pem'
                 },
                 // GENERATE WITH PASSWORD
-                privateKeyEncoding: {
-                    type: 'pkcs8',
-                    format: 'pem',
-                    cipher: 'aes-256-cbc',
-                    passphrase: password
-                }
-                // GENERATE WITHOUT PASSWORD
                 // privateKeyEncoding: {
                 //     type: 'pkcs8',
-                //     format: 'pem'
+                //     format: 'pem',
+                //     cipher: 'aes-256-cbc',
+                //     passphrase: password
                 // }
+                // GENERATE WITHOUT PASSWORD
+                privateKeyEncoding: {
+                    type: 'pkcs8',
+                    format: 'pem'
+                }
             }, async (err, publicKey, privateKey) => {
                 const key = {
                     [username]: {
@@ -175,6 +194,7 @@ const { Webhook, MessageBuilder } = require('discord-webhook-node');
                     privatekey: privateKey,
                     password: password,
                     email: email,
+                    settings: defaultSettings,
                     cookie: "N/A"
                 })
                 await accounts
@@ -238,7 +258,18 @@ const { Webhook, MessageBuilder } = require('discord-webhook-node');
             ).toString();
         }
     }
+    async function validateApiKey(apiName,apiPass,permissions) {
+        if (PrivateApis[apiName] == undefined || PrivateApis[apiName] == null) {
+            return 0; // error code 0: apiDoesNotExist
+        }
+        if (PrivateApis[apiName].permissions != permissions) {
+            return 1; // error code 1: invalid permissions
+        }
+        if (PrivateApis[apiName].apiPass == apiPass) {
+            return 3; // 3: clear!
+        }
 
+    }
     class Blockchain {
         constructor() {
             this.block1chain = [this.initGenesisBlock()];
@@ -278,7 +309,7 @@ const { Webhook, MessageBuilder } = require('discord-webhook-node');
         generateWallet,
         BlockCrypto,
         Blockchain,
-        getWallet,
+        getAccountFromUsername,
         debug,
         getWalletBalance,
         findAllTransactions,
@@ -287,6 +318,8 @@ const { Webhook, MessageBuilder } = require('discord-webhook-node');
         addAuthToken,
         getAccountFromAuthToken,
         sendToDiscord,
-        addToWallet
+        addToWallet,
+        validateApiKey,
+        getWalletHash
     }
 })();

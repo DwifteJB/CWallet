@@ -28,6 +28,10 @@ Account.init({
         type: DataTypes.STRING,
         allowNull: false
     },
+    settings: {
+        type: DataTypes.JSON,
+        allowNull: false
+    },
     cookie: {
         type: DataTypes.STRING,
         allowNull: true

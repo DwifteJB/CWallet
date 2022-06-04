@@ -1,3 +1,9 @@
+/*
+      INIT
+*/
+
+// PRIV KEYS
+const ApiKeys = require("./src/apiPrivateKeys.json");
 const express = require('express')
 const generateAuthToken = () => {
   return crypto.randomBytes(30).toString('hex');
@@ -34,9 +40,11 @@ app.set('view engine', 'hbs');
 app.use(cors());
 app.use('/socket.io', express.static('node_modules/socket.io/client-dist/'))
 app.use('/src', express.static('src/web'))
-// start server
+/*
+      START SERVER
+*/
 const server = app.listen(8080, () => {
-  console.log(`Example app listening at http://localhost:8080`)
+  console.log(`CCoin is running on localhost:8080 !`)
 })
 
 const socket = require("socket.io");
@@ -50,7 +58,9 @@ io.on('connection', async (socket) => {
     console.log('New Client connected with id: ' + msg);
   });
 });
-// LOGIN / REGISTER SHIT
+/*
+      LOGIN AND REGISTER
+*/
 app.get("/api/emit", async(req,res) => {
   io.sockets.emit("lolxba", "Starting emit...")
   res.end()
@@ -63,9 +73,9 @@ app.get('/login', async (req, res) => {
       return res.render('login', {
         message: `You have been logged out for inactivity.`,
         messageClass: 'alert-danger'
-      }); 
+      });
     } else {
-      res.redirect("/info")
+      res.redirect("/dashboard")
     }
   }
   res.render("login")
@@ -88,7 +98,7 @@ app.post("/login", async (req,res) => {
     return res.render('login', {
       message: `User doesn't exist.`,
       messageClass: 'alert-danger'
-    }); 
+    });
   }
   // check if password correct
   const validPassword = await bcrypt.compare(password, username.password);
@@ -96,7 +106,7 @@ app.post("/login", async (req,res) => {
     return res.render('login', {
       message: `Password Incorrect.`,
       messageClass: 'alert-danger'
-    }); 
+    });
   }
   const authToken = generateAuthToken();
 
@@ -108,7 +118,7 @@ app.post("/login", async (req,res) => {
   //req.io.sockets.emit("lolxda", req.body);
 
   // Redirect user to the protected page
-  res.redirect('/info'); //redirect to trgister cuz why not lo
+  res.redirect('/dashboard'); //redirect to trgister cuz why not lo
 })
 app.get("/logout", async (req,res) => {
   res.cookie('AuthToken', "no");
@@ -117,7 +127,7 @@ app.get("/logout", async (req,res) => {
 app.post('/register', async (req, res) => {
   const { name,email,password } = req.body;
   // check if user exists
-  if (await api.getWallet(name) !== false) { 
+  if (await api.getAccountFromUsername(name) !== false) {
     return res.render('register', {
       message: `User ${name} already exists`,
       messageClass: 'alert-danger'
@@ -134,7 +144,7 @@ app.post('/register', async (req, res) => {
     messageClass: 'alert-success'
   });
 });
-app.get("/info", async (req,res) => {
+app.get("/dashboard", async (req,res) => {
   if (!req.cookies.AuthToken) {
     return res.render("login", {
       message: "You have been logged out for inactivity",
@@ -142,16 +152,93 @@ app.get("/info", async (req,res) => {
     })
   }
   const account = await api.getAccountFromAuthToken(req.cookies.AuthToken)
-  res.render("info", {
+  res.render("dashboard", {
     username: account.dataValues.username,
-    wallet: crypto.createHash("sha256").update(account.dataValues.publickey).digest("hex"),
-    amount: await api.getWalletBalance(crypto.createHash("sha256").update(account.dataValues.publickey).digest("hex"))
+    wallet: api.getWalletHash(account.dataValues.publickey),
+    amount: await api.getWalletBalance(api.getWalletHash(account.dataValues.publickey)),
+    image: crypto.createHash('md5').update(account.dataValues.email).digest("hex"),
+    theme: account.dataValues.settings.theme,
   })
-  api.addToWallet(CC,crypto.createHash("sha256").update(account.dataValues.publickey).digest("hex"), 12)
-  console.log(req.cookies)
+  //api.addToWallet(CC,api.getWalletHash(account.dataValues.publickey), 12)
 })
 
-// Public API START
+/*
+    USER API
+
+*/
+app.post("/api/user:SendCoin", async(req,res) => {
+  // body values
+  const {amount,recipient,recipientType} = req.body;
+  let {message} = req.body;
+  console.log(message,amount,recipient,recipientType)
+  if (message === null || message === undefined) {
+    message = "No message specified";
+  }
+  if (amount <= 0) {
+    return res.send({error: true,code:4}) // negative number or 0
+  }
+  if (!req.cookies.AuthToken) {
+    return res.render("login", {
+      message: "You have been logged out for inactivity",
+      messageClass: "alert-danger"
+    })
+  }
+  const account = await api.getAccountFromAuthToken(req.cookies.AuthToken);
+  if(account == false) {
+    return res.render("login", {
+      message: "You have been logged out for inactivity",
+      messageClass: "alert-danger"
+    })
+  }
+  // user seems to be verified. continue.
+  if (await api.getWalletBalance(api.getWalletHash(account.dataValues.publickey)) >= amount) {
+    let recipientWalletAddress;
+    let recipientAccount;
+    switch (recipientType.toLowerCase()) {
+      case "email":
+        recipientAccount = await api.getAccountFromEmail(recipient.toLowerCase())
+        if (account.dataValues.privatekey == recipientAccount.dataValues.privatekey) {
+          return res.send({error: true,code:1}) // same account
+        }
+        if (recipientAccount == false) {
+          return res.send({error: true,code:2}) // account does not exist!
+        }
+        recipientWalletAddress = api.getWalletHash(recipientAccount.dataValues.publickey);
+        break;
+      case "username":
+        recipientAccount = await api.getAccountFromUsername(recipient);
+        if (account.dataValues.privatekey == recipientAccount.dataValues.privatekey) {
+          return res.send({error: true,code:1}) // same account
+        }
+        if (recipientAccount == false) {
+          return res.send({error: true,code:2}) // account does not exist!
+        }
+        recipientWalletAddress = api.getWalletHash(recipientAccount.dataValues.publickey);
+        break;
+      case "wallet":
+        if (recipient == api.getWalletHash(account.dataValues.publickey)) {
+          return res.send({error: true,code:2}) // account does not exist!
+        }
+        recipientWalletAddress = recipient;
+        break;
+      default:
+        return res.redirect("/dashboard",404)
+    }
+    if (await api.SendCoin(CC,recipientWalletAddress,message,amount,account.dataValues.privatekey,account.dataValues.publickey) == true) {
+    // this if if we successfully managed to send coin
+    return res.send({error: false,code:0}) // we sent some coiiin!
+    } else {
+      return res.send({error: true,code:5}) // coin failed to send; unknown reason
+    }
+  } else {
+    console.log(`User ${account.dataValues.username} has insufficient funds. Has ${await api.getWalletBalance(api.getWalletHash(account.dataValues.publickey))}. Wants to send ${amount}`)
+    return res.send({error: true,code:3}) // unsufficient funds
+  }
+})
+
+/*
+    PUBLIC API
+*/
 app.get("/api/transactions", async (req,res) => {
   res.json(await api.findAllTransactions())
 })
@@ -201,4 +288,18 @@ app.get("/api/chunkTest", async (req,res) => {
 })
 
 
+/*
+      PRIVATE API
+*/
 
+app.post("/api/private/linkAccount",async (req,res) => {
+  // apiPass,apiName,
+  const { apiPass,apiName,permissions,otherSiteEmail2Link,requestedEmail2Link }= req.body;
+  if(await api.validateApiKey(apiName,apiPass,permissions) != 3) {
+    return res.status(401).send("Unauthorized");
+  }
+  // lets link accounts!
+  if (await api.getAccountFromEmail(requestedEmail2Link)) {
+    // xoxo
+  }
+})
